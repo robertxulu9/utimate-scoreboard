@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Trophy, Users, Play, Settings } from "lucide-react"
 import CategorySelection from "@/components/category-selection"
 import GameModeSelection from "@/components/game-mode-selection"
+import GameSelection from "@/components/game-selection"
 import PlayerSetup from "@/components/player-setup"
 import ActiveGame from "@/components/active-game"
 import GameHistory from "@/components/game-history"
@@ -15,6 +16,9 @@ import Scoreboard from "@/components/scoreboard"
 export default function HomePage() {
   const [currentScreen, setCurrentScreen] = useState("home")
   const [selectedCategory, setSelectedCategory] = useState("")
+  const [selectedGameTemplate, setSelectedGameTemplate] = useState(null)
+  const [selectedGameName, setSelectedGameName] = useState("")
+  const [customScoring, setCustomScoring] = useState("")
   const [selectedGameMode, setSelectedGameMode] = useState("")
   const [players, setPlayers] = useState([])
   const [modeSettings, setModeSettings] = useState({})
@@ -63,7 +67,10 @@ export default function HomePage() {
 
   const handleCategorySelect = (category) => {
     setSelectedCategory(category)
-    setCurrentScreen("gameMode")
+    setSelectedGameTemplate(null)
+    setSelectedGameName("")
+    setCustomScoring("")
+    setCurrentScreen("gameSelect")
   }
 
   const handleGameModeSelect = (gameMode) => {
@@ -95,8 +102,11 @@ export default function HomePage() {
       case "category":
         setCurrentScreen("home")
         break
-      case "gameMode":
+      case "gameSelect":
         setCurrentScreen("category")
+        break
+      case "gameMode":
+        setCurrentScreen("gameSelect")
         break
       case "playerSetup":
         setCurrentScreen("gameMode")
@@ -112,6 +122,64 @@ export default function HomePage() {
 
   if (currentScreen === "category") {
     return <CategorySelection onSelect={handleCategorySelect} onBack={handleBack} />
+  }
+
+  if (currentScreen === "gameSelect") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 p-4">
+        <div className="max-w-3xl mx-auto space-y-6">
+          <div className="flex items-center gap-4">
+            <button className="text-sm text-gray-600" onClick={handleBack}>&larr; Back</button>
+            <h2 className="text-2xl font-bold">Choose a game</h2>
+          </div>
+
+          <GameSelection
+            category={selectedCategory}
+            onSelect={(g) => {
+              setSelectedGameTemplate(g)
+              if (g.key !== 'custom') {
+                setSelectedGameName(g.name)
+                setCurrentScreen('gameMode')
+              } else {
+                setSelectedGameName("")
+              }
+            }}
+          />
+
+          {selectedGameTemplate?.key === 'custom' && (
+            <div className="bg-white p-4 rounded border space-y-3">
+              <div>
+                <label className="block text-sm font-medium mb-1">Game name</label>
+                <input
+                  className="w-full border rounded px-3 py-2"
+                  placeholder="Enter game name"
+                  value={selectedGameName}
+                  onChange={(e) => setSelectedGameName(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Scoring system (optional)</label>
+                <input
+                  className="w-full border rounded px-3 py-2"
+                  placeholder="Describe how points are awarded"
+                  value={customScoring}
+                  onChange={(e) => setCustomScoring(e.target.value)}
+                />
+              </div>
+              <div className="flex justify-end">
+                <button
+                  className="px-4 py-2 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-semibold disabled:opacity-60"
+                  disabled={!selectedGameName.trim()}
+                  onClick={() => setCurrentScreen('gameMode')}
+                >
+                  Continue
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    )
   }
 
   if (currentScreen === "gameMode") {
@@ -170,8 +238,10 @@ export default function HomePage() {
     // League and Tournament should use ActiveGame container
     if (selectedGameMode === "league" || selectedGameMode === "tournament") {
       const gameData = activeGameData || {
-        name: "Tournament",
+        name: selectedGameName || "Tournament",
         type: selectedGameMode === "league" ? "league" : "knockout",
+        category: selectedCategory,
+        template: selectedGameTemplate?.key || null,
         players,
         startTime: new Date().toISOString(),
       }
@@ -203,6 +273,7 @@ export default function HomePage() {
         onBack={handleBackToHome}
         mode={selectedGameMode}
         modeSettings={modeSettings}
+        gameName={selectedGameName || "Game"}
       />
     )
   }

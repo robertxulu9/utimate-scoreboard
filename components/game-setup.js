@@ -13,10 +13,15 @@ import { usePlatform } from "@/hooks/use-platform"
 import { useDeviceCapabilities } from "@/hooks/use-device-capabilities"
 import { useMemoryManagement } from "@/hooks/use-memory-management"
 import { cn } from "@/lib/utils"
+import CategorySelection from "@/components/category-selection"
+import GameSelection from "@/components/game-selection"
 
 export default function GameSetup({ onStartGame, onBack }) {
   const [gameName, setGameName] = useState("")
   const [gameType, setGameType] = useState("normal")
+  const [category, setCategory] = useState("")
+  const [selectedTemplate, setSelectedTemplate] = useState(null)
+  const [scoringInfo, setScoringInfo] = useState("")
   const [players, setPlayers] = useState([{ id: 1, name: "", avatar: "🎮" }])
   const [isLoading, setIsLoading] = useState(true)
   const { isMobile, isTablet } = usePlatform()
@@ -116,8 +121,11 @@ export default function GameSetup({ onStartGame, onBack }) {
 
     triggerHapticFeedback("success")
     const gameData = {
-      name: gameName || "Untitled Game",
+      name: gameName || (selectedTemplate && selectedTemplate.key !== 'custom' ? selectedTemplate.name : "Untitled Game"),
+      category,
+      template: selectedTemplate?.key || null,
       type: gameType,
+      scoringInfo,
       players: validPlayers.map((p) => ({
         ...p,
         score: 0,
@@ -142,6 +150,10 @@ export default function GameSetup({ onStartGame, onBack }) {
     )
   }
 
+  if (!category) {
+    return <CategorySelection onSelect={setCategory} onBack={onBack} />
+  }
+
   return (
     <div
       className={cn("min-h-screen", {
@@ -157,6 +169,26 @@ export default function GameSetup({ onStartGame, onBack }) {
         })}
       >
         <div className="space-y-6">
+          {/* Category & Game Template */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Game Category</CardTitle>
+              <CardDescription>Selected: {category}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label>Choose a game</Label>
+                <GameSelection
+                  category={category}
+                  onSelect={(g) => {
+                    setSelectedTemplate(g)
+                    if (g.key !== 'custom') setGameName(g.name)
+                  }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Game Details */}
           <Card>
             <CardHeader>
@@ -173,6 +205,18 @@ export default function GameSetup({ onStartGame, onBack }) {
                   onChange={(e) => setGameName(e.target.value)}
                 />
               </div>
+
+              {selectedTemplate?.key === 'custom' && (
+                <div>
+                  <Label htmlFor="scoring">Scoring System</Label>
+                  <Input
+                    id="scoring"
+                    placeholder="Describe how points are awarded"
+                    value={scoringInfo}
+                    onChange={(e) => setScoringInfo(e.target.value)}
+                  />
+                </div>
+              )}
 
               <div>
                 <Label htmlFor="gameType">Tournament Format</Label>

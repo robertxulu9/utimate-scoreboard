@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { ArrowLeft, Trophy, RotateCcw } from "lucide-react"
 import confetti from "canvas-confetti"
 
-export default function Scoreboard({ players, setPlayers, onBack, mode = "normal", modeSettings = {} }) {
+export default function Scoreboard({ players, setPlayers, onBack, mode = "normal", modeSettings = {}, gameName = "Game" }) {
   const [sortedPlayers, setSortedPlayers] = useState([])
   const [isPortrait, setIsPortrait] = useState(false)
   const [movementById, setMovementById] = useState({}) // { [id]: 'up' | 'down' | 'none' }
@@ -85,7 +85,7 @@ export default function Scoreboard({ players, setPlayers, onBack, mode = "normal
 
     try {
       const finalData = {
-        name: "Game",
+        name: gameName || "Game",
         type: mode === "timed" ? "timed" : mode === "target-score" ? "target-score" : "normal",
         players,
         finalGameTime: mode === "timed" ? (modeSettings.totalMinutes || 5) * 60 : undefined,

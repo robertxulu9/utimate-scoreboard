@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Timer, Dice6, Shuffle, Save } from "lucide-react"
 import { CrossPlatformHeader } from "@/components/cross-platform-header"
 import { PlatformGestureHandler } from "@/components/platform-gesture-handler"
@@ -17,6 +18,7 @@ import KnockoutGame from "@/components/tournament-formats/knockout-game"
 
 export default function ActiveGame({ gameData, onBack, onGameComplete }) {
   const [players, setPlayers] = useState(gameData.players)
+  const [gameName, setGameName] = useState(gameData.name || "Untitled Game")
   const [gameTime, setGameTime] = useState(0)
   const [isTimerRunning, setIsTimerRunning] = useState(false)
   const [confetti, setConfetti] = useState([])
@@ -50,6 +52,7 @@ export default function ActiveGame({ gameData, onBack, onGameComplete }) {
     const autoSave = setInterval(() => {
       const gameState = {
         ...gameData,
+        name: gameName,
         players,
         matches,
         currentRound,
@@ -60,7 +63,7 @@ export default function ActiveGame({ gameData, onBack, onGameComplete }) {
     }, autoSaveInterval)
 
     return addTimer(autoSave)
-  }, [gameData, players, matches, currentRound, gameTime, isTimerRunning, autoSaveInterval, addTimer])
+  }, [gameData, gameName, players, matches, currentRound, gameTime, isTimerRunning, autoSaveInterval, addTimer])
 
   const triggerConfetti = () => {
     if (!enableAnimations) {
@@ -102,6 +105,7 @@ export default function ActiveGame({ gameData, onBack, onGameComplete }) {
     triggerHapticFeedback("success")
     const finalGameData = {
       ...gameData,
+      name: gameName,
       players,
       matches,
       currentRound,
@@ -218,7 +222,16 @@ export default function ActiveGame({ gameData, onBack, onGameComplete }) {
         ))}
 
       <CrossPlatformHeader
-        title={gameData.name}
+        title={
+          <div className="flex items-center gap-2">
+            <Input
+              value={gameName}
+              onChange={(e) => setGameName(e.target.value)}
+              className="h-9 max-w-xs"
+              placeholder="Game name"
+            />
+          </div>
+        }
         subtitle={`${gameData.type} format`}
         onBack={onBack}
         canGoBack={true}
